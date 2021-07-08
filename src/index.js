@@ -37,7 +37,7 @@ io.on("connection", (socket) => {
         console.log(error);
       } else {
         socket.broadcast.emit(
-          "message",
+          "location",
           address,
           `https://google.com/maps?q=${latitude},${longitude}`
         );
@@ -51,7 +51,7 @@ io.on("connection", (socket) => {
     if (filter.isProfane(msg) && adult) {
       return callback("Profanity is not allowed");
     }
-    io.emit("newMessage", msg);
+    io.emit("message", msg);
     callback();
   });
 

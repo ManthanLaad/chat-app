@@ -1,13 +1,33 @@
 const socket = io();
 
+// ELEMENTS
+
 const $form = document.querySelector("#message-form");
 const $sendLocation = document.querySelector("#send-location");
 const $display = document.querySelector("#display");
 const $sendMessage = document.querySelector("#send-message");
+const $messages = document.querySelector("#messages");
 
-socket.on("message", (msg, link) => Display(msg, true, link));
+// TEMPLATES
+const messageTemplate = document.querySelector("#message-template").innerHTML;
+const locationTemplate = document.querySelector("#location-template").innerHTML;
 
-socket.on("newMessage", (msg) => Display(msg));
+// LISTENERS
+
+socket.on("message", (msg) => {
+  const html = Mustache.render(messageTemplate, {
+    message: msg,
+  });
+  $messages.insertAdjacentHTML("beforeend", html);
+});
+
+socket.on("location", (address, link) => {
+  const html = Mustache.render(locationTemplate, {
+    address,
+    link,
+  });
+  $messages.insertAdjacentHTML("beforeend", html);
+});
 
 $form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -17,13 +37,13 @@ $form.addEventListener("submit", (event) => {
   input = event.target.elements.message;
   socket.emit("sendMessage", input.value, (error) => {
     $sendMessage.removeAttribute("disabled");
+    input.value = "";
+    input.focus();
     if (error) {
       return console.log(error);
     }
     console.log("Message Delivered");
   });
-  input.value = "";
-  input.focus();
 });
 
 $sendLocation.addEventListener("click", () => {
@@ -40,20 +60,3 @@ $sendLocation.addEventListener("click", () => {
     }
   );
 });
-
-function Display(msg, bold = false, link = "") {
-  const h4 = document.createElement("div");
-  if (link) {
-    const a = document.createElement("a");
-    a.setAttribute("href", link);
-    a.setAttribute("target", "_blank");
-    a.innerText = msg;
-    h4.appendChild(a);
-  } else {
-    if (bold) {
-      h4.style.fontStyle = "italic";
-    }
-    h4.innerText = msg;
-  }
-  $display.appendChild(h4);
-}
