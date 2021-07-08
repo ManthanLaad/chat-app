@@ -38,7 +38,6 @@ io.on("connection", (socket) => {
   socket.on("sendLocation", ({ latitude, longitude }, callback) => {
     reverseGeocode({ latitude, longitude }, (error, address) => {
       if (error) {
-        console.log(error);
       } else {
         socket.broadcast.emit(
           "location",
