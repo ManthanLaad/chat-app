@@ -17,12 +17,16 @@
     <div id="display"></div>
     <script id="message-template" type="text/html">
       <div>
-        <p>{{message}}</p>
+        <p>{{createdAt}} - {{message}}</p>
       </div>
     </script>
     <script id="location-template" type="text/html">
       <div>
-        <p>{{address}}<a href="{{link}}" target="_blank"> here</a></p>
+        <p>
+          {{createdAt}} - {{address}}<a href="{{link}}" target="_blank">
+            here</a
+          >
+        </p>
       </div>
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.1/mustache.min.js"></script>

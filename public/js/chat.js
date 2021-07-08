@@ -14,17 +14,19 @@ const locationTemplate = document.querySelector("#location-template").innerHTML;
 
 // LISTENERS
 
-socket.on("message", (msg) => {
+socket.on("message", ({ text, createdAt }) => {
   const html = Mustache.render(messageTemplate, {
-    message: msg,
+    message: text,
+    createdAt: moment(createdAt).format("h:mm a"),
   });
   $messages.insertAdjacentHTML("beforeend", html);
 });
 
-socket.on("location", (address, link) => {
+socket.on("location", ({ address, link, createdAt }) => {
   const html = Mustache.render(locationTemplate, {
     address,
     link,
+    createdAt: moment(createdAt).format("h:mm a"),
   });
   $messages.insertAdjacentHTML("beforeend", html);
 });

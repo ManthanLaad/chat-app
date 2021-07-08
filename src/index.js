@@ -9,6 +9,7 @@ const Filter = require("bad-words");
 
 // IMPORTS
 const reverseGeocode = require("./utils/reverseGeocode");
+const { generateMessage, location } = require("./utils/messages");
 
 // CONFIGS VARIABLES
 const port = process.env.PORT || 3000;
@@ -27,9 +28,12 @@ const adult = true;
 
 io.on("connection", (socket) => {
   console.log("New Connection");
-  socket.emit("message", "Welcome!");
+  socket.emit("message", generateMessage("Welcome!"));
 
-  socket.broadcast.emit("message", "New user has joined the chat!");
+  socket.broadcast.emit(
+    "message",
+    generateMessage("New user has joined the chat!")
+  );
 
   socket.on("sendLocation", ({ latitude, longitude }, callback) => {
     reverseGeocode({ latitude, longitude }, (error, address) => {
@@ -38,8 +42,10 @@ io.on("connection", (socket) => {
       } else {
         socket.broadcast.emit(
           "location",
-          address,
-          `https://google.com/maps?q=${latitude},${longitude}`
+          location(
+            address,
+            `https://google.com/maps?q=${latitude},${longitude}`
+          )
         );
         callback();
       }
@@ -51,12 +57,12 @@ io.on("connection", (socket) => {
     if (filter.isProfane(msg) && adult) {
       return callback("Profanity is not allowed");
     }
-    io.emit("message", msg);
+    io.emit("message", generateMessage(msg));
     callback();
   });
 
   socket.on("disconnect", () =>
-    io.emit("message", "A user has left the chat!")
+    io.emit("message", generateMessage("A user has left the chat!"))
   );
 });
 
