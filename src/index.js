@@ -16,8 +16,19 @@ const io = socketio(server);
 // SETUPS
 app.use(express.static(publicDirPath));
 
-io.on("connection", () => {
+// GLOBAL VARIABLES
+let count = 0;
+
+// SOCKETS
+io.on("connection", (socket) => {
   console.log("New WebSocket connection");
+  socket.emit("countUpdate", count);
+
+  socket.on("increment", () => {
+    count++;
+    //socket.emit("countUpdate", count);  EMITS ONLY TO SINGLE CONNECTION
+    io.emit("countUpdate", count);
+  });
 });
 
 // ENDPOINTS
