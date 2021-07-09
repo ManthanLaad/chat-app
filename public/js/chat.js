@@ -11,6 +11,7 @@ const $messages = document.querySelector("#messages");
 // TEMPLATES
 const messageTemplate = document.querySelector("#message-template").innerHTML;
 const locationTemplate = document.querySelector("#location-template").innerHTML;
+const sidebarTemplate = document.querySelector("#sidebar-template").innerHTML;
 
 // OPTIONS
 
@@ -22,23 +23,55 @@ console.log(
     ignoreQueryPrefix: true,
   })
 );
+
+// FUNCTIONS
+const autoscroll = () => {
+  const $newMessage = $messages.lastElementChild;
+
+  const newMessageStyles = getComputedStyle($newMessage);
+  const newMessageMargin = parseInt(newMessageStyles.marginBottom);
+  const newMessageHeight = $newMessage.offsetHeight + newMessageMargin;
+
+  const visibleHeight = $messages.offsetHeight;
+
+  const containerHeight = $messages.scrollHeight;
+
+  const scrollOffset = $messages.scrollTop + visibleHeight;
+
+  if (containerHeight - newMessageHeight <= scrollOffset) {
+    $messages.scrollTop = $messages.scrollHeight;
+  }
+};
+
 // LISTENERS
 
-socket.on("message", ({ text, createdAt }) => {
+socket.on("message", ({ username, text, createdAt }) => {
   const html = Mustache.render(messageTemplate, {
+    username,
     message: text,
     createdAt: moment(createdAt).format("h:mm a"),
   });
   $messages.insertAdjacentHTML("beforeend", html);
+  autoscroll();
 });
 
-socket.on("location", ({ address, link, createdAt }) => {
+socket.on("location", ({ username, address, link, createdAt }) => {
   const html = Mustache.render(locationTemplate, {
+    username,
     address,
     link,
     createdAt: moment(createdAt).format("h:mm a"),
   });
   $messages.insertAdjacentHTML("beforeend", html);
+  autoscroll();
+});
+
+socket.on("roomData", ({ room, users }) => {
+  const html = Mustache.render(sidebarTemplate, {
+    room,
+    users,
+  });
+  document.querySelector("#sidebar").innerHTML = html;
 });
 
 $form.addEventListener("submit", (event) => {
@@ -73,4 +106,9 @@ $sendLocation.addEventListener("click", () => {
   );
 });
 
-socket.emit("join", { username, room });
+socket.emit("join", { username, room }, (error) => {
+  if (error) {
+    alert(error);
+    location.href = "/";
+  }
+});

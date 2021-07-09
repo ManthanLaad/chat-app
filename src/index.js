@@ -35,22 +35,38 @@ const adult = true;
 io.on("connection", (socket) => {
   console.log("New Connection");
 
-  socket.on("join", ({ username, room }) => {
-    socket.join(room);
-    socket.emit("message", generateMessage("Welcome!"));
+  socket.on("join", (info, callback) => {
+    const { error, user } = addUser({ id: socket.id, ...info });
+
+    if (error) {
+      return callback(error);
+    }
+
+    socket.join(user.room);
+    socket.emit("message", generateMessage("Admin", "Welcome!"));
 
     socket.broadcast
-      .to(room)
-      .emit("message", generateMessage(`${username} has joined the room!`));
+      .to(user.room)
+      .emit(
+        "message",
+        generateMessage("Admin", `${user.username} has joined the room!`)
+      );
+    io.to(user.room).emit("roomData", {
+      room: user.room,
+      users: getUsersInRoom(user.room),
+    });
+    callback();
   });
 
   socket.on("sendLocation", ({ latitude, longitude }, callback) => {
     reverseGeocode({ latitude, longitude }, (error, address) => {
       if (error) {
       } else {
-        socket.broadcast.emit(
+        const user = getUser(socket.id);
+        io.to(user.room).emit(
           "location",
           location(
+            user.username,
             address,
             `https://google.com/maps?q=${latitude},${longitude}`
           )
@@ -65,13 +81,25 @@ io.on("connection", (socket) => {
     if (filter.isProfane(msg) && adult) {
       return callback("Profanity is not allowed");
     }
-    io.to("Goa").emit("message", generateMessage(msg));
+
+    const user = getUser(socket.id);
+    io.to(user.room).emit("message", generateMessage(user.username, msg));
     callback();
   });
 
-  socket.on("disconnect", () =>
-    io.emit("message", generateMessage("A user has left the chat!"))
-  );
+  socket.on("disconnect", () => {
+    const user = removeUser(socket.id);
+    if (user) {
+      io.to(user[0].room).emit(
+        "message",
+        generateMessage("Admin", `${user[0].username} has left the chat!`)
+      );
+      io.to(user[0].room).emit("roomData", {
+        room: user[0].room,
+        users: getUsersInRoom(user[0].room),
+      });
+    }
+  });
 });
 
 // ENDPOINTS
